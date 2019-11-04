@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<form>
+    <input name="password" id="pwd">
+    <button id="submit">提交</button>
+</form>
+</body>
+<script src="https://cdn.bootcss.com/jsencrypt/3.0.0-beta.1/jsencrypt.js"></script> <!--import {JSEncrypt} from 'jsencrypt'  npm install "jsencrypt": "2.3.1"-->
+<script src="https://code.jquery.com/jquery-3.4.1.min.js"
+        integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+        crossorigin="anonymous"></script>
+<script type="text/javascript">
+
+  $("#submit").click(function () {
+    var publicKey;
+    $.ajax({
+      url: "http://localhost:8080/rsa",
+      type: "get",
+      success: function (data) {
+        var encrypt = new JSEncrypt();
+        encrypt.setPublicKey(data);
+        var encrypted = encrypt.encrypt($("#pwd").val());
+        $.ajax({
+          url: "http://localhost:8080/rsa",
+          type: "post",
+          data: {
+            password: encrypted
+          },
+          success: function (data) {
+            console.log(data);
+          }
+        })
+      }
+    });
+
+
+    return false;
+  });
+
+</script>
+</html>

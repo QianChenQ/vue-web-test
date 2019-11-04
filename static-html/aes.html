@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<form>
+    <input name="password" id="pwd">
+    <button id="submit">提交</button>
+</form>
+</body>
+<script src="https://code.jquery.com/jquery-3.4.1.min.js"
+        integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+        crossorigin="anonymous"></script>
+<script src="https://cdn.bootcss.com/crypto-js/3.1.9-1/crypto-js.js"></script>
+<script>
+
+  $("#submit").click(function () {
+    var publicKey;
+    $.ajax({
+      url: "http://localhost:8080/aes",
+      type: "get",
+      success: function (data) {
+        var iv = CryptoJS.enc.Base64.parse('ZGIyMTM5NTYxYzlmZTA2OA==');
+        console.log(CryptoJS.enc.Base64.stringify(iv));
+        var encryptedData = CryptoJS.AES.encrypt($("#pwd").val(), data, {
+          iv: iv,
+          mode: CryptoJS.mode.ECB,
+          padding: CryptoJS.pad.Pkcs7
+        });
+        cipherText = encryptedData.ciphertext.toString();
+        // 拿到字符串类型的密文需要先将其用Hex方法parse一下
+        var cipherTextHexStr = CryptoJS.enc.Hex.parse(cipherText);
+
+        // 将密文转为Base64的字符串
+        // 只有Base64类型的字符串密文才能对其进行解密
+        var cipherTextBase64Str = CryptoJS.enc.Base64.stringify(cipherTextHexStr);
+        $.ajax({
+          url: "http://localhost:8080/aes",
+          type: "post",
+          data: {
+            iv: iv,
+            password: cipherTextBase64Str
+          },
+          success: function (data) {
+            console.log(data);
+          }
+        })
+      }
+    });
+
+
+    return false;
+  });
+</script>
+</html>
