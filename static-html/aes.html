@@ -15,33 +15,26 @@
         crossorigin="anonymous"></script>
 <script src="https://cdn.bootcss.com/crypto-js/3.1.9-1/crypto-js.js"></script>
 <script>
-
   $("#submit").click(function () {
     var publicKey;
     $.ajax({
+      //获取秘钥
       url: "http://localhost:8080/aes",
       type: "get",
       success: function (data) {
-        var iv = CryptoJS.enc.Base64.parse('ZGIyMTM5NTYxYzlmZTA2OA==');
-        console.log(CryptoJS.enc.Base64.stringify(iv));
-        var encryptedData = CryptoJS.AES.encrypt($("#pwd").val(), data, {
-          iv: iv,
+        var key = CryptoJS.enc.Utf8.parse(data);
+        var parse = CryptoJS.enc.Utf8.parse($("#pwd").val());
+        //使用秘钥进行加密，下面的模式必须与后端对应Pkcs7对应java的PKCS5Padding
+        var encryptedData = CryptoJS.AES.encrypt(parse, key, {
           mode: CryptoJS.mode.ECB,
           padding: CryptoJS.pad.Pkcs7
         });
-        cipherText = encryptedData.ciphertext.toString();
-        // 拿到字符串类型的密文需要先将其用Hex方法parse一下
-        var cipherTextHexStr = CryptoJS.enc.Hex.parse(cipherText);
-
-        // 将密文转为Base64的字符串
-        // 只有Base64类型的字符串密文才能对其进行解密
-        var cipherTextBase64Str = CryptoJS.enc.Base64.stringify(cipherTextHexStr);
+        var cipherText = encryptedData.toString();
         $.ajax({
           url: "http://localhost:8080/aes",
           type: "post",
           data: {
-            iv: iv,
-            password: cipherTextBase64Str
+            password: cipherText
           },
           success: function (data) {
             console.log(data);
@@ -49,8 +42,6 @@
         })
       }
     });
-
-
     return false;
   });
 </script>
