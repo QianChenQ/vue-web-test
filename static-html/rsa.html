@@ -19,7 +19,7 @@
     var publicKey;
     $.ajax({
       // 获取公钥
-      url: "http://localhost:8080/rsa",
+      url: "http://192.168.44.128:8080/rsa",
       type: "get",
       success: function (data) {
         //使用公钥进行加密
@@ -27,7 +27,7 @@
         encrypt.setPublicKey(data);
         var encrypted = encrypt.encrypt($("#pwd").val());
         $.ajax({
-          url: "http://localhost:8080/rsa",
+          url: "http://192.168.44.128:8080/rsa",
           type: "post",
           data: {
             password: encrypted
