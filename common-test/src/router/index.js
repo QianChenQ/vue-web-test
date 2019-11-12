@@ -23,7 +23,7 @@ const routes = [
     component: () => import("../views/Login.vue")
   }, {
     path: "/swagger/home",
-    name: "SwaggerHome",
+    name: "ExtendSwaggerHome",
     component: () => import("../views/ExtendSwaggerHome.vue")
   }
 ]
