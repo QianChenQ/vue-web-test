@@ -3,7 +3,6 @@
     <el-aside style="background: #2c3e50">
       <el-container>
         <el-header>
-
         </el-header>
         <el-main>
           <project-card :name="item.name" :address="item.address" :port="item.port" :path="item.path"
@@ -13,9 +12,20 @@
       </el-container>
     </el-aside>
     <el-container>
-      <el-header style="background: #8cc9c6"></el-header>
+      <el-header style="background: #8cc9c6">
+        <el-form :inline="true">
+          <div style="margin-top: 10px;text-align: left">
+            <el-form-item>
+              <el-input v-model="searchForm.value"></el-input>
+            </el-form-item>
+            <el-form-item>
+              <el-button icon="el-icon-search" v-on:click="search"></el-button>
+            </el-form-item>
+          </div>
+        </el-form>
+      </el-header>
       <el-main>
-
+        <api-list :treeData="treeData" ref="apiList"></api-list>
       </el-main>
     </el-container>
     <el-drawer title="添加项目" :visible.sync="drawer" direction="ltr" ref="drawer">
@@ -51,20 +61,24 @@
 <script>
   import axios from 'axios'
   import ProjectCard from "../components/ProjectCard"
+  import ApiList from "../components/ApiList"
 
   export default {
     name: 'ExtendSwaggerHome',
-    components: {ProjectCard},
+    components: {ApiList, ProjectCard},
     data: function () {
       return {
         drawer: false,
         pjForm: {
-          address: "",
-          port: "",
+          address: "192.168.168.14",
+          port: "18060",
           username: "",
           password: "",
           path: '/v2/api-docs',
           pjName: ""
+        },
+        searchForm: {
+          value: ""
         },
         treeData: [],
         pjCardList: [],
@@ -124,54 +138,74 @@
               }
               this.pjCardList.push(pjCard)
               this.addPjLoading = false
-              //对api数据重新封装
               let data = response.data
-              let pjList = []
-              let pjInfo = {
-                name: data.info.name,
-                description: data.info.description,
-                api: []
-              }
-              data.tags.forEach(function (item) {
-                let api = {
-                  name: item.name,
-                  description: item.description,
-                  pjName: data.info.name
-                }
-                let paths = []
-                data.paths.forEach(function (pathItem) {
-                  let pathArray = pathItem.keys()
-                  pathArray.forEach(function (path) {
-                    paths.push(pathItem[path])
-                  })
-                })
-                api.paths = paths
-                pjInfo.api.push(api)
-              })
-              pjList.push(pjInfo)
+              //对api数据重新封装
+              let pjList = this.buildApiObj(data)
+              console.log(pjList)
+              this.treeData = pjList
+              //存到localStorage中
               let localPjList = JSON.parse(localStorage.getItem("pjList"))
               if (localPjList) {
                 localPjList.push(pjList)
                 localStorage.setItem("pjList", JSON.stringify(localPjList))
-              }else {
+              } else {
                 localStorage.setItem("pjList", JSON.stringify(pjList))
               }
-
-
-            }).catch(error => {
-              this.$message({
-                message: error.response.statusText,
-                type: 'error',
-                center: true
-              })
-              this.addPjLoading = false
-            })
+            })//.catch(error => {
+            //   console.log(error)
+            //   this.$message({
+            //     message: error.response.statusText,
+            //     type: 'error',
+            //     center: true
+            //   })
+            //   this.addPjLoading = false
+            // })
           } else {
             //取消按钮加载状态
             this.addPjLoading = false
             return false
           }
         })
+      },
+      buildApiObj: function (data, aliasName) {
+        let _this = this
+        let pjList = []
+        let pjInfo = {
+          aliasName: aliasName ? aliasName : data.info.title,
+          name: data.info.title,
+          description: data.info.description,
+          api: []
+        }
+        //对pai的tags进行循环
+        data.tags.forEach(function (item) {
+          let api = {
+            name: item.name,
+            description: item.description,
+            pjName: data.info.name
+          }
+          let paths = []
+          //对path进行循环
+          Object.getOwnPropertyNames(data.paths).forEach((pathName) => {
+            let pathItem = data.paths[pathName]
+            //对每个path的type进行循环
+            Object.getOwnPropertyNames(pathItem).forEach((pathType) => {
+              let path = pathItem[pathType]
+              //判断path的tags与tags的name是否相同
+              if (path.tags[0] === item.name) {
+                path.type = pathType
+                path.url = "http://" + _this.pjForm.address + ":" + _this.pjForm.port + pathName
+                paths.push(path)
+              }
+            })
+          })
+          api.paths = paths
+          pjInfo.api.push(api)
+        })
+        pjList.push(pjInfo)
+        return pjList
+      },
+      search: function () {
+        this.$refs.apiList.filter(this.searchForm.value)
       }
     },
     created: function () {
@@ -179,6 +213,11 @@
       let pjCardList = localStorage.getItem('pjCardList')
       if (pjCardList) {
         this.pjCardList = JSON.parse(pjCardList)
+      }
+      //重localStorage中获取api列表的值
+      let pjList = localStorage.getItem('pjList')
+      if (pjList) {
+        this.treeData = JSON.parse(pjList)
       }
     }
   }
