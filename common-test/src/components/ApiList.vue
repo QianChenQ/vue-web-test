@@ -10,14 +10,16 @@
         <el-collapse>
           <el-collapse-item v-for="path in api.paths">
             <template slot="title">
-              <div class="type">
-                {{path.type}}
-              </div>
-              <div class="url">
-                {{path.url}}
-              </div>
-              <div class="summary">
-                {{path.summary}}
+              <div class="path-title">
+                <div class="type" :class="path.type">
+                  {{path.type}}
+                </div>
+                <div class="url">
+                  {{path.url}}
+                </div>
+                <div class="summary">
+                  {{path.summary}}
+                </div>
               </div>
             </template>
           </el-collapse-item>
@@ -40,13 +42,13 @@
       filter: function (value) {
         let newTreeData = []
         let tempTreeNodeData = this.treeData
-        tempTreeNodeData.forEach((treeNode)=>{
+        tempTreeNodeData.forEach((treeNode) => {
           //对api进行遍历
           treeNode.api.forEach((item) => {
             //判断api中的name是否包含过滤值
             if (item.name.indexOf(value) > -1) {
               let treeNode = {
-                name : item.name,
+                name: item.name,
                 description: item.description,
                 api: [item]
               }
@@ -61,14 +63,15 @@
                   paths.push(path)
                 }
               })
-              let apiItem = {
-                name: item.name,
-                description: item.description,
-                paths: paths
-              }
               if (paths.length > 0) {
+                //构建一个api
+                let apiItem = {
+                  name: item.name,
+                  description: item.description,
+                  paths: paths
+                }
                 let newTreeNode = {
-                  name : treeNode.name,
+                  name: treeNode.name,
                   description: treeNode.description,
                   api: []
                 }
@@ -97,9 +100,10 @@
   }
 
   .type {
-    margin: 0 10px 0 10px;
+    margin: 0px 10px 0px 10px;
     font-size: 14px;
     font-weight: bold;
+    width: 80px;
   }
 
   .url {
@@ -109,5 +113,17 @@
   .title {
     font-size: 16px;
     font-weight: bold;
+  }
+
+  .path-title {
+    display: flex;
+    height: 40px;
+    line-height: 44px
+  }
+
+  .post {
+    background: #49cc90;
+    color: #fff;
+    border-radius: 2px;
   }
 </style>
