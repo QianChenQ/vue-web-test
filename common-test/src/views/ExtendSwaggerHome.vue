@@ -6,6 +6,8 @@
 
         </el-header>
         <el-main>
+          <project-card :name="item.name" :address="item.address" :port="item.port" :path="item.path"
+                        v-for="item in pjCardList"></project-card>
           <el-button type="info" class="pj-add-button" v-on:click="drawer=true"><i class="el-icon-plus"></i></el-button>
         </el-main>
       </el-container>
@@ -16,7 +18,7 @@
 
       </el-main>
     </el-container>
-    <el-drawer title="添加项目" :visible.sync="drawer" direction="ltr">
+    <el-drawer title="添加项目" :visible.sync="drawer" direction="ltr" ref="drawer">
       <el-container>
         <el-main>
           <el-form :model="pjForm" size="mini" ref="pjForm" :rules="addRules">
@@ -26,11 +28,17 @@
             <el-form-item label="端口号" prop="port">
               <el-input v-model="pjForm.port" placeholder="8080" clearable></el-input>
             </el-form-item>
+            <el-form-item label="路径" prop="path">
+              <el-input v-model="pjForm.path" placeholder="/v2/api-docs" clearable></el-input>
+            </el-form-item>
             <el-form-item label="账号" prop="username">
               <el-input v-model="pjForm.username" placeholder="admin" clearable></el-input>
             </el-form-item>
             <el-form-item label="密码" prop="password">
               <el-input type="password" v-model="pjForm.password" placeholder="******" clearable></el-input>
+            </el-form-item>
+            <el-form-item label="文档名称" prop="pjName">
+              <el-input v-model="pjForm.pjName" placeholder="新建文档" clearable></el-input>
             </el-form-item>
             <el-button v-on:click="addPj" :loading="addPjLoading" type="button" class="full-width">添加</el-button>
           </el-form>
@@ -42,9 +50,11 @@
 
 <script>
   import axios from 'axios'
+  import ProjectCard from "../components/ProjectCard"
 
   export default {
     name: 'ExtendSwaggerHome',
+    components: {ProjectCard},
     data: function () {
       return {
         drawer: false,
@@ -53,7 +63,11 @@
           port: "",
           username: "",
           password: "",
+          path: '/v2/api-docs',
+          pjName: ""
         },
+        treeData: [],
+        pjCardList: [],
         addPjLoading: false,
         addRules: {
           port: [
@@ -73,31 +87,83 @@
         this.$refs['pjForm'].validate((valid) => {
           //验证通过，获取api文档
           if (valid) {
-            let proxy = {
-
-            }
-            // if (this.username) {
-            //   proxy.username = this.username
-            // }
-            // if (this.password) {
-            //   proxy.password = this.password
-            // }
+            let baseRrl = "http://" + this.pjForm.address + ":" + this.pjForm.port
+            console.log(baseRrl)
             let http = axios.create({
+              baseURL: baseRrl,
               proxy: {
-                host: '192.168.168.14',
-                port: 18050
+                host: this.address,
+                port: this.port
               }
             })
-            http.get("/v2/api-docs").then(response => {
+            //api路径
+            let path = this.path ? this.path : '/v2/api-docs'
+            http.get(path).then(response => {
               console.log(response)
+              //成功时关闭drawer
+              this.$refs['drawer'].closeDrawer()
+              //建结果新建文档卡片存入localstorage
+              let pjCardList = localStorage.getItem('pjCardList')
+              if (!this.pjForm.pjName) {
+                this.pjForm.pjName = response.data.info.title
+              }
+              let pjCard = {
+                name: this.pjForm.pjName,
+                address: this.pjForm.address,
+                port: this.pjForm.port,
+                path: this.pjForm.path
+              }
+              if (pjCardList) {
+                pjCardList = JSON.parse(pjCardList)
+                pjCardList.push(pjCard)
+                localStorage.setItem('pjCardList', JSON.stringify(pjCardList))
+              } else {
+                pjCardList = []
+                pjCardList[0] = pjCard
+                localStorage.setItem("pjCardList", JSON.stringify(pjCardList))
+              }
+              this.pjCardList.push(pjCard)
               this.addPjLoading = false
+              //对api数据重新封装
+              let data = response.data
+              let pjList = []
+              let pjInfo = {
+                name: data.info.name,
+                description: data.info.description,
+                api: []
+              }
+              data.tags.forEach(function (item) {
+                let api = {
+                  name: item.name,
+                  description: item.description,
+                  pjName: data.info.name
+                }
+                let paths = []
+                data.paths.forEach(function (pathItem) {
+                  let pathArray = pathItem.keys()
+                  pathArray.forEach(function (path) {
+                    paths.push(pathItem[path])
+                  })
+                })
+                api.paths = paths
+                pjInfo.api.push(api)
+              })
+              pjList.push(pjInfo)
+              let localPjList = JSON.parse(localStorage.getItem("pjList"))
+              if (localPjList) {
+                localPjList.push(pjList)
+                localStorage.setItem("pjList", JSON.stringify(localPjList))
+              }else {
+                localStorage.setItem("pjList", JSON.stringify(pjList))
+              }
+
+
             }).catch(error => {
               this.$message({
                 message: error.response.statusText,
                 type: 'error',
                 center: true
               })
-              console.log(error)
               this.addPjLoading = false
             })
           } else {
@@ -106,6 +172,13 @@
             return false
           }
         })
+      }
+    },
+    created: function () {
+      //从localstorage中获取文档卡片列表
+      let pjCardList = localStorage.getItem('pjCardList')
+      if (pjCardList) {
+        this.pjCardList = JSON.parse(pjCardList)
       }
     }
   }
