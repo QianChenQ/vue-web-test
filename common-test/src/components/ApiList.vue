@@ -1,6 +1,6 @@
 <template>
   <el-collapse>
-    <div v-for="items in treeNodeData">
+    <div v-for="items in apiList">
       <el-collapse-item v-for="api in items.api">
         <template slot="title">
           <div class="title">
@@ -34,15 +34,12 @@
     name: 'ApiList',
     data: function () {
       return {
-        treeNodeData: this.treeData
       }
     },
-    props: ['treeData'],
     methods: {
       filter: function (value) {
-        let newTreeData = []
-        let tempTreeNodeData = this.treeData
-        tempTreeNodeData.forEach((treeNode) => {
+        let newApiList = []
+        this.apiList.forEach((treeNode) => {
           //对api进行遍历
           treeNode.api.forEach((item) => {
             //判断api中的name是否包含过滤值
@@ -52,7 +49,7 @@
                 description: item.description,
                 api: [item]
               }
-              newTreeData.push(treeNode)
+              newApiList.push(treeNode)
             } else {
               let paths = []
               item.paths.forEach((path) => {
@@ -76,16 +73,21 @@
                   api: []
                 }
                 newTreeNode.api.push(apiItem)
-                newTreeData.push(newTreeNode)
+                newApiList.push(newTreeNode)
               }
             }
           })
         })
-        this.treeNodeData = newTreeData
+        this.$store.commit("replaceApiList", newApiList)
+      }
+    },
+    computed: {
+      apiList() {
+        return this.$store.state.apiList
       }
     },
     created() {
-      console.log(this.treeData)
+
     }
   }
 </script>

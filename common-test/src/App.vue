@@ -25,5 +25,6 @@
 
   html {
     height: 100%;
+    overflow: hidden;
   }
 </style>

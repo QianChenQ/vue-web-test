@@ -6,7 +6,8 @@
         </el-header>
         <el-main>
           <project-card :name="item.name" :address="item.address" :port="item.port" :path="item.path"
-                        v-for="item in pjCardList"></project-card>
+                        v-for="item in pjCardList" :closeable="true" :close="deletePjCard"
+                        :click="clickCard" :isActive="item.name === activeCardName"></project-card>
           <el-button type="info" class="pj-add-button" v-on:click="drawer=true"><i class="el-icon-plus"></i></el-button>
         </el-main>
       </el-container>
@@ -25,7 +26,7 @@
         </el-form>
       </el-header>
       <el-main>
-        <api-list :treeData="treeData" ref="apiList"></api-list>
+        <api-list ref="apiList"></api-list>
       </el-main>
     </el-container>
     <el-drawer title="添加项目" :visible.sync="drawer" direction="ltr" ref="drawer">
@@ -80,7 +81,6 @@
         searchForm: {
           value: ""
         },
-        treeData: [],
         pjCardList: [],
         addPjLoading: false,
         addRules: {
@@ -90,7 +90,9 @@
           address: [
             {required: true, message: '地址不能为空', trigger: "blur"}
           ]
-        }
+        },
+        localStorageApiList: [],
+        activeCardName: ''
       }
     },
     methods: {
@@ -102,7 +104,6 @@
           //验证通过，获取api文档
           if (valid) {
             let baseRrl = "http://" + this.pjForm.address + ":" + this.pjForm.port
-            console.log(baseRrl)
             let http = axios.create({
               baseURL: baseRrl,
               proxy: {
@@ -140,16 +141,17 @@
               this.addPjLoading = false
               let data = response.data
               //对api数据重新封装
-              let pjList = this.buildApiObj(data)
-              console.log(pjList)
-              this.treeData = pjList
+              let pjList = this.buildApiObj(data, this.pjForm.pjName)
+              this.$store.commit("replaceApiList", pjList)
               //存到localStorage中
               let localPjList = JSON.parse(localStorage.getItem("pjList"))
               if (localPjList) {
                 localPjList.push(pjList)
                 localStorage.setItem("pjList", JSON.stringify(localPjList))
+                this.localStorageApiList = localPjList
               } else {
-                localStorage.setItem("pjList", JSON.stringify(pjList))
+                localStorage.setItem("pjList", JSON.stringify([pjList]))
+                this.localStorageApiList = pjList
               }
             })//.catch(error => {
             //   console.log(error)
@@ -169,11 +171,11 @@
       },
       buildApiObj: function (data, aliasName) {
         let _this = this
-        let pjList = []
         let pjInfo = {
           aliasName: aliasName ? aliasName : data.info.title,
           name: data.info.title,
           description: data.info.description,
+          host: "http://" + _this.pjForm.address + ":" + _this.pjForm.port,
           api: []
         }
         //对pai的tags进行循环
@@ -193,7 +195,7 @@
               //判断path的tags与tags的name是否相同
               if (path.tags[0] === item.name) {
                 path.type = pathType
-                path.url = "http://" + _this.pjForm.address + ":" + _this.pjForm.port + pathName
+                path.url = pathName
                 paths.push(path)
               }
             })
@@ -201,11 +203,49 @@
           api.paths = paths
           pjInfo.api.push(api)
         })
-        pjList.push(pjInfo)
-        return pjList
+        return pjInfo
       },
       search: function () {
-        this.$refs.apiList.filter(this.searchForm.value)
+        if (this.searchForm.value) {
+          this.$refs.apiList.filter(this.searchForm.value)
+        } else {
+
+        }
+      },
+      //点击卡片时的事件
+      clickCard: function (name) {
+        let _this = this
+        let apiList = JSON.parse(localStorage.getItem('pjList'))
+        _this.activeCardName = name
+        apiList.forEach((item) => {
+          if (item.aliasName === name) {
+            _this.$store.commit("replaceApiList", item)
+          }
+        })
+        this.search()
+      },
+      //删除卡片
+      deletePjCard: function (name) {
+        //删除卡片
+        for (let i = this.pjCardList.length - 1; i >= 0; i--) {
+          if (this.pjCardList[i].name === name) {
+            this.pjCardList.splice(i, 1)
+          }
+        }
+        localStorage.setItem('pjCardList', JSON.stringify(this.pjCardList))
+        //删除api列表
+        this.$store.commit("deleteApiListByName", name)
+        for (let j = this.localStorageApiList.length - 1; j >= 0; j--) {
+          if (this.localStorageApiList[j].aliasName === name) {
+            this.localStorageApiList.splice(j, 1)
+          }
+        }
+        localStorage.setItem("pjList", JSON.stringify(this.localStorageApiList))
+      }
+    },
+    computed: {
+      apiList: function () {
+        return this.$store.state.apiList
       }
     },
     created: function () {
@@ -215,9 +255,10 @@
         this.pjCardList = JSON.parse(pjCardList)
       }
       //重localStorage中获取api列表的值
-      let pjList = localStorage.getItem('pjList')
-      if (pjList) {
-        this.treeData = JSON.parse(pjList)
+      let apiList = localStorage.getItem('pjList')
+      if (apiList) {
+        this.localStorageApiList = JSON.parse(apiList)
+        this.$store.commit("replaceApiList", this.localStorageApiList)
       }
     }
   }
