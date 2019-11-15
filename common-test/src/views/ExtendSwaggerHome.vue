@@ -7,7 +7,8 @@
         <el-main>
           <project-card :name="item.name" :address="item.address" :port="item.port" :path="item.path"
                         v-for="item in pjCardList" :closeable="true" :close="deletePjCard"
-                        :click="clickCard" :isActive="item.name === activeCardName"></project-card>
+                        :click="clickCard" :isActive="item.name === activeCardName">
+          </project-card>
           <el-button type="info" class="pj-add-button" v-on:click="drawer=true"><i class="el-icon-plus"></i></el-button>
         </el-main>
       </el-container>

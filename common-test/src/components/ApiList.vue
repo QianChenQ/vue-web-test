@@ -8,10 +8,10 @@
           </div>
         </template>
         <el-collapse>
-          <el-collapse-item v-for="path in api.paths">
+          <el-collapse-item v-for="path in api.paths" :class="path.type">
             <template slot="title">
               <div class="path-title">
-                <div class="type" :class="path.type">
+                <div class="type">
                   {{path.type}}
                 </div>
                 <div class="url">
@@ -22,6 +22,7 @@
                 </div>
               </div>
             </template>
+            <api-parameters :path="path"></api-parameters>
           </el-collapse-item>
         </el-collapse>
       </el-collapse-item>
@@ -30,8 +31,10 @@
 </template>
 
 <script>
+  import ApiParameters from "./ApiParameters"
   export default {
     name: 'ApiList',
+    components: {ApiParameters},
     data: function () {
       return {
       }
@@ -120,10 +123,16 @@
   .path-title {
     display: flex;
     height: 40px;
-    line-height: 44px
+    line-height: 44px;
   }
 
   .post {
+
+  }
+  .post .path-title {
+
+  }
+  .post .type {
     background: #49cc90;
     color: #fff;
     border-radius: 2px;
