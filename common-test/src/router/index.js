@@ -25,6 +25,10 @@ const routes = [
     path: "/swagger/home",
     name: "ExtendSwaggerHome",
     component: () => import("../views/ExtendSwaggerHome.vue")
+  }, {
+    path: "/encrypt",
+    name: "Encrypt",
+    component: () =>import("../views/Encrypt.vue")
   }
 ]
 

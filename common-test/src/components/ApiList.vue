@@ -132,9 +132,20 @@
   .post .path-title {
 
   }
-  .post .type {
-    background: #49cc90;
+  .type {
     color: #fff;
     border-radius: 2px;
+  }
+  .post .type {
+    background: #49cc90;
+  }
+  .get .type {
+    background: #61affe;
+  }
+  .put .type {
+    background: #fca130;
+  }
+  .delete .type {
+    background: #f93e3e
   }
 </style>

@@ -1,16 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Title</title>
+  <meta charset="UTF-8">
+  <title>Title</title>
 </head>
 <body>
 <form>
-    <input name="password" id="pwd">
-    <button id="submit">提交</button>
+  <input name="password" id="pwd">
+  <button id="submit">提交</button>
 </form>
 </body>
-<script src="https://cdn.bootcss.com/jsencrypt/3.0.0-beta.1/jsencrypt.js"></script> <!--import {JSEncrypt} from 'jsencrypt'  npm install "jsencrypt": "2.3.1"-->
+<script src="https://cdn.bootcss.com/jsencrypt/3.0.0-rc.1/jsencrypt.min.js"></script>
+<!--import {JSEncrypt} from 'jsencrypt'  npm install "jsencrypt": "2.3.1"-->
 <script src="https://code.jquery.com/jquery-3.4.1.min.js"
         integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
         crossorigin="anonymous"></script>
@@ -19,18 +20,19 @@
     var publicKey;
     $.ajax({
       // 获取公钥
-      url: "http://192.168.44.128:8080/rsa",
+      url: "http://localhost:18010/user/publicKey",
       type: "get",
       success: function (data) {
         //使用公钥进行加密
         var encrypt = new JSEncrypt();
-        encrypt.setPublicKey(data);
-        var encrypted = encrypt.encrypt($("#pwd").val());
+        encrypt.setPublicKey("MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvEKxgTML0ErwBn/tjqHM09sZQmH7iK+edmwgvPyA4X+MPc3gqNe66mKNGb7W+1aORTGFoIXXXsVYAPy6a894On8fpYU7ccDA4koGF7EmNswUN0u4vygSYAgM+uhDOZmKCN0yLOYhd7rqWZMwIeLNs2j6vtVLQMapZBaXEEYoiVDEGNxNF2ZwtHNDs/G+Wn/4i0bmidZUC0uteZPG6ejTpslmav8qCuJL1n43jSuJN7U6ySrRPIzv5wg6apiH2k5rUAwIKyS1Xoi99R5A8eNrO3oFA5EC/beilP622mDpRHhXfiw0yOLoA2sSg83Pw0bERdYuI6pG2g5LFabh9U6lhQIDAQAB");
+        //var encrypted = encrypt.encrypt($("#pwd").val());
         $.ajax({
-          url: "http://192.168.44.128:8080/rsa",
+          url: "http://localhost:18010/user/login",
           type: "post",
           data: {
-            password: encrypted
+            account: "18838789f53eb4ec743f3630794be6a8ee858dc3",
+            password: $("#pwd").val()
           },
           success: function (data) {
             console.log(data);

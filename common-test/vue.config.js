@@ -3,5 +3,6 @@ module.exports = {
     open: true,
     https: false,
     hotOnly: false,
+    port: 3000
   }
 };
